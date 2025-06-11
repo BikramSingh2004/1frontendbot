@@ -1,6 +1,8 @@
 import { makeAutoObservable } from 'mobx';
 import axios from 'axios';
 
+const API = import.meta.env.VITE_API_BASE_URL;
+
 class ChatStore {
   messages = [];
   isLoading = false;
@@ -14,8 +16,6 @@ class ChatStore {
     this.userInput = value;
   }
 
-
-  
   addMessage(role, content) {
     this.messages.push({ role, content });
   }
@@ -29,7 +29,7 @@ class ChatStore {
     this.isLoading = true;
 
     try {
-      const res = await axios.post('http://localhost:5000/api/message', {
+      const res = await axios.post(`${API}/message`, {
         message: userMessage,
         userId: 'default-user',
       });
@@ -44,7 +44,7 @@ class ChatStore {
 
   async loadHistory() {
     try {
-      const res = await axios.get('http://localhost:5000/api/history?userId=default-user');
+      const res = await axios.get(`${API}/history?userId=default-user`);
       this.messages = res.data.messages || [];
     } catch (err) {
       console.error('Failed to load history:', err.message);
