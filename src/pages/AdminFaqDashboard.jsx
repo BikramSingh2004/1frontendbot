@@ -12,9 +12,11 @@ const AdminFaqDashboard = () => {
   const [docFile, setDocFile] = useState(null);
   const [docMessage, setDocMessage] = useState('');
 
+  const API = import.meta.env.VITE_API_BASE_URL;
+
   const fetchFaqs = async () => {
     try {
-      const res = await axios.get('/api/faq');
+      const res = await axios.get(`${API}/faq`);
       if (Array.isArray(res.data)) {
         setFaqs(res.data);
       } else {
@@ -32,7 +34,7 @@ const AdminFaqDashboard = () => {
     if (!question.trim() || !answer.trim()) return;
     try {
       setLoading(true);
-      await axios.post('/api/faq', { question, answer });
+      await axios.post(`${API}/faq`, { question, answer });
       setQuestion('');
       setAnswer('');
       fetchFaqs();
@@ -46,7 +48,7 @@ const AdminFaqDashboard = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`/api/faq/${id}`);
+      await axios.delete(`${API}/faq/${id}`);
       fetchFaqs();
     } catch (err) {
       setError('Failed to delete FAQ');
@@ -59,7 +61,7 @@ const AdminFaqDashboard = () => {
     try {
       const formData = new FormData();
       formData.append('faq', docFile);
-      await axios.post('/api/upload-faq', formData, {
+      await axios.post(`${API}/upload-faq`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       setDocMessage('📄 Document uploaded successfully');

@@ -6,13 +6,15 @@ const AdminDocUploadPage = () => {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
+  const API = import.meta.env.VITE_API_BASE_URL;
+
   const handleUpload = async () => {
     if (!file) return setError('Please select a .txt file');
     const formData = new FormData();
     formData.append('faq', file);
 
     try {
-      await axios.post('/api/upload-faq', formData, {
+      await axios.post(`${API}/upload-faq`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       setMessage('📄 Document uploaded successfully');
@@ -26,8 +28,8 @@ const AdminDocUploadPage = () => {
   };
 
   return (
-    <div className="max-w-lg mx-auto mt-10 border rounded p-6 shadow">
-      <h2 className="text-2xl font-bold mb-4 text-center">📁 Upload Company Document</h2>
+    <div className="max-w-lg mx-auto mt-10 border rounded p-6 shadow bg-white">
+      <h2 className="text-2xl font-bold mb-4 text-center text-blue-800">📁 Upload Company Document</h2>
 
       {message && <p className="text-green-600 mb-2">{message}</p>}
       {error && <p className="text-red-500 mb-2">{error}</p>}

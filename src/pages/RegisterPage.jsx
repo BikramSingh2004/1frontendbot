@@ -10,9 +10,11 @@ const RegisterPage = () => {
   const [success, setSuccess] = useState('');
   const navigate = useNavigate();
 
+  const API = import.meta.env.VITE_API_BASE_URL;
+
   const handleRegister = async () => {
     try {
-      await axios.post('/api/auth/register', { email, password, role });
+      await axios.post(`${API}/auth/register`, { email, password, role });
       setSuccess('Registration successful! You can now login.');
       setError('');
       setTimeout(() => navigate('/login'), 2000);
@@ -23,27 +25,27 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="max-w-sm mx-auto p-6 mt-12 border rounded shadow">
-      <h2 className="text-2xl font-bold mb-4">📝 Register</h2>
-      {error && <p className="text-red-500 mb-2">{error}</p>}
-      {success && <p className="text-green-500 mb-2">{success}</p>}
+    <div className="max-w-sm mx-auto p-6 mt-12 border bg-blue-100 rounded shadow">
+      <h2 className="text-2xl font-bold mb-4 text-blue-800">📝 Register</h2>
+      {error && <p className="text-red-600 mb-2">{error}</p>}
+      {success && <p className="text-green-600 mb-2">{success}</p>}
 
       <input
         type="email"
         placeholder="Email"
-        className="w-full border p-2 rounded mb-3"
+        className="w-full border p-2 rounded mb-3 text-black"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
       />
       <input
         type="password"
         placeholder="Password"
-        className="w-full border p-2 rounded mb-3"
+        className="w-full border p-2 rounded mb-3 text-black"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
       />
       <select
-        className="w-full border p-2 rounded mb-3"
+        className="w-full border p-2 rounded mb-3 text-black"
         value={role}
         onChange={(e) => setRole(e.target.value)}
       >
