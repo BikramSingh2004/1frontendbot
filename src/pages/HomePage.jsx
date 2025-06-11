@@ -17,13 +17,7 @@ const HomePage = () => {
       {/* Navbar */}
       <nav className="bg-white shadow-md sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
-          <div className="text-blue-700 text-2xl font-bold">💬 AI Chat Support</div>
-          <div className="flex gap-3">
-            <Link to="/login" className="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">Login</Link>
-            <Link to="/register" className="text-sm bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600">Register</Link>
-            <Link to="/chat" className="text-sm bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">Chat</Link>
-            <Link to="/admin" className="text-sm bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700">Admin</Link>
-          </div>
+          
         </div>
       </nav>
 
