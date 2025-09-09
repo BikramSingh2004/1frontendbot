@@ -5,7 +5,6 @@ const AdminDocUploadPage = () => {
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
-
   const API = import.meta.env.VITE_API_BASE_URL;
 
   const handleUpload = async () => {
@@ -28,25 +27,23 @@ const AdminDocUploadPage = () => {
   };
 
   return (
-    <div className="max-w-lg mx-auto mt-10 border rounded p-6 shadow bg-white">
-      <h2 className="text-2xl font-bold mb-4 text-center text-blue-800">📁 Upload Company Document</h2>
+    <div style={{display:'grid', placeItems:'center'}}>
+      <div className="block" style={{maxWidth:'600px', width:'100%', marginTop:'1.5rem'}}>
+        <h2 style={{fontSize:'1.4rem', fontWeight:800, textAlign:'center', marginBottom:'10px'}}>📁 Upload Company Document</h2>
 
-      {message && <p className="text-green-600 mb-2">{message}</p>}
-      {error && <p className="text-red-500 mb-2">{error}</p>}
+        {message && <p style={{color:'#16a34a', marginBottom:'8px'}}>{message}</p>}
+        {error && <p style={{color:'#ef4444', marginBottom:'8px'}}>{error}</p>}
 
-      <input
-        type="file"
-        accept=".txt"
-        onChange={(e) => setFile(e.target.files[0])}
-        className="w-full border rounded mb-4 p-2"
-      />
+        <input
+          type="file"
+          accept=".txt"
+          onChange={(e) => setFile(e.target.files[0])}
+          className="input"
+          style={{background:'#fff', marginBottom:'10px'}}
+        />
 
-      <button
-        onClick={handleUpload}
-        className="bg-blue-600 text-white px-4 py-2 rounded w-full hover:bg-blue-700"
-      >
-        Upload
-      </button>
+        <button onClick={handleUpload} className="btn">Upload</button>
+      </div>
     </div>
   );
 };

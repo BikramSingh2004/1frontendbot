@@ -1,19 +1,65 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { chatStore } from '../stores/ChatStore';
 import { useNavigate } from 'react-router-dom';
-import { UploadCloud } from 'lucide-react';
+import { UploadCloud, Send, X, Bot, User2, ChevronDown, Loader2 } from 'lucide-react';
+
+const MAX_INPUT_HEIGHT = 160; // keep in sync with CSS
 
 const ChatPage = observer(() => {
   const navigate = useNavigate();
   const [file, setFile] = useState(null);
   const fileInputRef = useRef(null);
+  const listRef = useRef(null);
+  const textareaRef = useRef(null);
+  const [showScrollBtn, setShowScrollBtn] = useState(false);
+
+  const API = import.meta.env.VITE_API_BASE_URL;
 
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('role');
     navigate('/login');
   };
+
+  const scrollToBottom = (behavior = 'smooth') => {
+    const el = listRef.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior });
+  };
+
+  useEffect(() => { scrollToBottom('auto'); }, []);
+  useEffect(() => { scrollToBottom(); }, [chatStore.messages.length, chatStore.isLoading]);
+
+  useEffect(() => {
+    const el = listRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 140;
+      setShowScrollBtn(!nearBottom);
+    };
+    el.addEventListener('scroll', onScroll);
+    return () => el.removeEventListener('scroll', onScroll);
+  }, []);
+
+  useEffect(() => {
+    if (chatStore.messages.length === 0) chatStore.loadHistory?.();
+  }, []);
+
+  const autosize = () => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    ta.style.height = 'auto';
+    const next = Math.min(ta.scrollHeight, MAX_INPUT_HEIGHT);
+    ta.style.height = next + 'px';
+    ta.style.overflowY = ta.scrollHeight > MAX_INPUT_HEIGHT ? 'auto' : 'hidden';
+  };
+  useEffect(() => { autosize(); }, [chatStore.userInput]);
+
+  const handleFileChange = (e) => {
+    const uploaded = e.target.files?.[0];
+    if (uploaded) setFile(uploaded);
+  };
+  const removeFile = () => setFile(null);
 
   const sendMessage = async () => {
     const userMessage = chatStore.userInput.trim();
@@ -22,123 +68,160 @@ const ChatPage = observer(() => {
     chatStore.setUserInput('');
     chatStore.isLoading = true;
 
-    // First: Upload file if any
     if (file) {
       const formData = new FormData();
       formData.append('faq', file);
-
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/upload-faq`, {
-          method: 'POST',
-          body: formData,
-        });
-        const data = await res.json();
+        await fetch(`${API}/upload-faq`, { method: 'POST', body: formData });
         chatStore.addMessage('assistant', `📄 File "${file.name}" uploaded successfully.`);
-      } catch (err) {
+      } catch {
         chatStore.addMessage('assistant', '❌ Failed to upload file.');
       }
-
-      setFile(null); // reset file
+      setFile(null);
     }
 
-    // Then: Send user message if any
     if (userMessage) {
       chatStore.addMessage('user', userMessage);
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/message`, {
+        const res = await fetch(`${API}/message`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message: userMessage, userId: 'default-user' }),
         });
         const data = await res.json();
         chatStore.addMessage('assistant', data.reply || 'No response');
-      } catch (err) {
+      } catch {
         chatStore.addMessage('assistant', '❌ Error getting AI response');
       }
     }
 
     chatStore.isLoading = false;
+    scrollToBottom();
   };
 
-  const handleFileChange = (e) => {
-    const uploaded = e.target.files[0];
-    if (uploaded) setFile(uploaded);
+  const onKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
+
+  const fmtTime = (ts) => {
+    if (!ts) return '';
+    const d = new Date(ts);
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   return (
-    <div className="flex flex-col h-screen bg-black text-white">
+    <div className="chat-root chat-screen text-white">
       {/* Header */}
-      <div className="bg-gray-900 px-4 py-3 flex justify-between items-center shadow">
-        <div>
-          <h2 className="text-xl font-bold text-green-400">💬 AI Chat Assistant</h2>
-          <p className="text-xs text-gray-400">Available 24/7</p>
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => navigate('/')}
-            className="bg-gray-700 hover:bg-gray-600 text-sm px-3 py-1 rounded"
-          >
-            Home
-          </button>
-          <button
-            onClick={handleLogout}
-            className="bg-red-600 hover:bg-red-700 text-sm px-3 py-1 rounded"
-          >
-            Logout
-          </button>
-        </div>
-      </div>
-
-      {/* Chat Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-zinc-900">
-        {chatStore.messages.map((msg, i) => (
-          <div
-            key={i}
-            className={`max-w-[85%] px-4 py-2 rounded-lg text-sm whitespace-pre-wrap ${
-              msg.role === 'user'
-                ? 'ml-auto bg-green-600 text-white'
-                : 'mr-auto bg-zinc-800 text-gray-200'
-            }`}
-          >
-            {msg.content}
+      <header className="chat-header">
+        <div className="chat-container header-inner">
+          <div className="header-left">
+            <div className="avatar bot"><Bot className="ic" /></div>
+            <div>
+              <h2 className="title">AI Chat Assistant</h2>
+              <p className="subtitle">Online • 24/7</p>
+            </div>
           </div>
-        ))}
-        {chatStore.isLoading && (
-          <div className="text-xs text-gray-400 italic">Agent is typing...</div>
-        )}
-      </div>
+          <div className="header-actions">
+            <button onClick={() => navigate('/')} className="btn-ghost">Home</button>
+            <button onClick={handleLogout} className="btn-danger">Logout</button>
+          </div>
+        </div>
+      </header>
 
-      {/* Input Section */}
-      <div className="border-t bg-zinc-800 p-3 flex items-center gap-2">
-        <button
-          onClick={() => fileInputRef.current.click()}
-          className="p-2 text-gray-300 hover:text-white"
-          title="Attach .txt/.jpg/.png"
-        >
-          <UploadCloud className="w-5 h-5" />
+      {/* Messages */}
+      <section ref={listRef} className="chat-area">
+        <div className="chat-container messages">
+          {chatStore.messages.map((msg, i) => {
+            const isUser = msg.role === 'user';
+            return (
+              <div key={i} className={`row ${isUser ? 'me' : 'ai'}`}>
+                {!isUser && <div className="avatar dot"><Bot className="ic-sm" /></div>}
+                <div className={`bubble ${isUser ? 'me' : 'ai'}`}>
+                  {msg.content}
+                  <div className="ts">{fmtTime(msg.ts)}</div>
+                </div>
+                {isUser && <div className="avatar dot me"><User2 className="ic-sm" /></div>}
+              </div>
+            );
+          })}
+          {chatStore.isLoading && (
+            <div className="typing">
+              <span className="dot1" /><span className="dot2" /><span className="dot3" />
+              <span className="txt">Assistant is typing…</span>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Composer (fixed like GPT) */}
+      <footer className="composer">
+        <div className="chat-container">
+          {file && (
+            <div className="file-chip">
+              <span className="truncate">📎 {file.name}</span>
+              <button onClick={removeFile} className="chip-x" title="Remove">
+                <X className="ic-sm" />
+              </button>
+            </div>
+          )}
+
+          <div className="composer-row">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="btn-icon"
+              title="Attach .txt/.jpg/.png"
+            >
+              <UploadCloud className="ic" />
+            </button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              onChange={handleFileChange}
+              accept=".txt,.jpg,.jpeg,.png"
+            />
+
+            <textarea
+              ref={textareaRef}
+              value={chatStore.userInput}
+              onChange={(e) => chatStore.setUserInput(e.target.value)}
+              onInput={autosize}
+              onKeyDown={onKeyDown}
+              placeholder="Write a message…  (Shift+Enter for newline)"
+              className="composer-input"
+              rows={1}
+              spellCheck
+            />
+
+            <button
+              onClick={sendMessage}
+              disabled={chatStore.isLoading || (!chatStore.userInput.trim() && !file)}
+              className="btn-send"
+            >
+              {chatStore.isLoading ? (
+                <>
+                  <Loader2 className="ic-sm spin" />
+                  Sending
+                </>
+              ) : (
+                <>
+                  <Send className="ic-sm" />
+                  Send
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </footer>
+
+      {showScrollBtn && (
+        <button onClick={() => scrollToBottom()} className="scroll-floater" title="Scroll to latest">
+          <ChevronDown className="ic" />
         </button>
-        <input
-          type="file"
-          ref={fileInputRef}
-          className="hidden"
-          onChange={handleFileChange}
-          accept=".txt,.jpg,.jpeg,.png"
-        />
-        <input
-          type="text"
-          className="flex-1 rounded-full px-4 py-2 text-sm text-black focus:outline-none"
-          placeholder="Ask something..."
-          value={chatStore.userInput}
-          onChange={(e) => chatStore.setUserInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-        />
-        <button
-          onClick={sendMessage}
-          className="ml-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 text-sm rounded-full"
-        >
-          Send
-        </button>
-      </div>
+      )}
     </div>
   );
 });
