@@ -17,13 +17,12 @@ class ChatStore {
   }
 
   addMessage(role, content) {
-    this.messages.push({ role, content });
+    this.messages.push({ role, content, ts: Date.now() }); // add timestamp
   }
 
   async sendMessage() {
     const userMessage = this.userInput.trim();
     if (!userMessage) return;
-
     this.addMessage('user', userMessage);
     this.userInput = '';
     this.isLoading = true;
@@ -33,9 +32,8 @@ class ChatStore {
         message: userMessage,
         userId: 'default-user',
       });
-
       this.addMessage('assistant', res.data.reply || 'No response');
-    } catch (err) {
+    } catch {
       this.addMessage('assistant', 'Error connecting to server');
     } finally {
       this.isLoading = false;
@@ -45,7 +43,11 @@ class ChatStore {
   async loadHistory() {
     try {
       const res = await axios.get(`${API}/history?userId=default-user`);
-      this.messages = res.data.messages || [];
+      const msgs = (res.data.messages || []).map(m => ({
+        ...m,
+        ts: m.ts ?? Date.now(),
+      }));
+      this.messages = msgs;
     } catch (err) {
       console.error('Failed to load history:', err.message);
     }

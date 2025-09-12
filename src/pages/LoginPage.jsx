@@ -7,8 +7,7 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
-
-  const API = import.meta.env.VITE_API_BASE_URL;
+  const API = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '');
 
   const handleLogin = async () => {
     try {
@@ -16,35 +15,51 @@ const LoginPage = () => {
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('role', res.data.role);
       navigate(res.data.role === 'admin' ? '/admin' : '/chat');
-    } catch (err) {
+    } catch {
       setError('Invalid credentials');
     }
   };
 
   return (
-    <div className="max-w-sm mx-auto p-10 mt-20 border bg-blue-600 rounded shadow text-white">
-      <h2 className="text-2xl font-bold mb-4">🔐 Login</h2>
-      {error && <p className="text-red-200 mb-2">{error}</p>}
-      <input
-        type="email"
-        placeholder="Email"
-        className="w-full border p-2 rounded mb-3 text-black"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <input
-        type="password"
-        placeholder="Password"
-        className="w-full border p-2 rounded mb-3 text-black"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
-      <button
-        onClick={handleLogin}
-        className="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded"
-      >
-        Login
-      </button>
+    <div style={{display:'grid', placeItems:'center', minHeight:'calc(100vh - 64px)'}}>
+      <div className="auth-card">
+        <h2 className="auth-title">🔐 Login</h2>
+
+        {error && (
+          <p style={{
+            marginBottom: '10px', padding: '8px 10px',
+            borderRadius: '10px', textAlign: 'center',
+            color: '#fecaca', background: 'rgba(239,68,68,.18)',
+            border: '1px solid rgba(239,68,68,.35)'
+          }}>
+            {error}
+          </p>
+        )}
+
+        <input
+          type="email"
+          placeholder="Email"
+          className="input"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          style={{marginBottom: '10px'}}
+        />
+
+        <input
+          type="password"
+          placeholder="Password"
+          className="input"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          style={{marginBottom: '14px'}}
+        />
+
+        <button onClick={handleLogin} className="btn">Login</button>
+
+        <p className="auth-help">
+          Don’t have an account? <a href="/register">Create one</a>
+        </p>
+      </div>
     </div>
   );
 };

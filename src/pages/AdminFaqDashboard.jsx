@@ -17,16 +17,10 @@ const AdminFaqDashboard = () => {
   const fetchFaqs = async () => {
     try {
       const res = await axios.get(`${API}/faq`);
-      if (Array.isArray(res.data)) {
-        setFaqs(res.data);
-      } else {
-        setFaqs([]);
-        console.error('Expected array, got:', res.data);
-      }
+      setFaqs(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       setError('Failed to fetch FAQs');
       setFaqs([]);
-      console.error(err);
     }
   };
 
@@ -38,9 +32,8 @@ const AdminFaqDashboard = () => {
       setQuestion('');
       setAnswer('');
       fetchFaqs();
-    } catch (err) {
+    } catch {
       setError('Failed to add FAQ');
-      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -50,9 +43,8 @@ const AdminFaqDashboard = () => {
     try {
       await axios.delete(`${API}/faq/${id}`);
       fetchFaqs();
-    } catch (err) {
+    } catch {
       setError('Failed to delete FAQ');
-      console.error(err);
     }
   };
 
@@ -66,14 +58,14 @@ const AdminFaqDashboard = () => {
       });
       setDocMessage('📄 Document uploaded successfully');
       setDocFile(null);
-    } catch (err) {
-      console.error(err);
+    } catch {
       setDocMessage('❌ Upload failed');
     }
   };
 
   useEffect(() => {
     fetchFaqs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -81,52 +73,57 @@ const AdminFaqDashboard = () => {
       <h1 className="text-3xl font-extrabold mb-4 text-center">🛠️ Admin FAQ Portal</h1>
 
       {error && (
-        <div className="bg-red-100 text-red-700 px-4 py-2 mb-4 rounded border border-red-300">
+        <div className="block" style={{borderColor:'#fecaca', background:'#fff1f2'}}>
           {error}
         </div>
       )}
 
-      <div className="mb-6 bg-white rounded-lg shadow p-4 space-y-3 border border-gray-200">
+      <div className="block" style={{marginBottom:'1rem'}}>
+        <h3>Add FAQ</h3>
         <input
           placeholder="Enter question..."
-          className="w-full border rounded p-2"
+          className="input"
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
+          style={{marginBottom: '8px'}}
         />
         <input
           placeholder="Enter answer..."
-          className="w-full border rounded p-2"
+          className="input"
           value={answer}
           onChange={(e) => setAnswer(e.target.value)}
+          style={{marginBottom: '10px'}}
         />
         <button
-          className="w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded hover:bg-blue-700 transition"
+          className="btn"
           onClick={handleAddFaq}
           disabled={loading}
         >
           {loading ? 'Adding...' : 'Add FAQ'}
         </button>
 
-        <div className="pt-4 border-t mt-4">
-          <label className="block text-sm font-medium mb-1">Upload Document (.txt)</label>
+        <div style={{marginTop: '14px', paddingTop: '12px', borderTop: '1px solid #e5e7eb'}}>
+          <label className="text-sm" style={{display:'block', marginBottom: '6px'}}>Upload Document (.txt)</label>
           <input
             type="file"
             accept=".txt"
             onChange={(e) => setDocFile(e.target.files[0])}
-            className="w-full border rounded p-2"
+            className="input"
+            style={{marginBottom: '8px', background:'#fff'}}
           />
           <button
             onClick={handleDocUpload}
-            className="mt-2 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded w-full"
+            className="btn"
+            disabled={!docFile}
           >
             Upload Document
           </button>
-          {docMessage && <p className="text-sm mt-2 text-blue-600">{docMessage}</p>}
+          {docMessage && <p className="auth-help" style={{marginTop: '8px'}}>{docMessage}</p>}
         </div>
       </div>
 
       <div className="space-y-4">
-        {Array.isArray(faqs) && faqs.length > 0 ? (
+        {faqs.length > 0 ? (
           faqs.map((faq) => (
             <motion.div
               key={faq._id}
@@ -134,14 +131,16 @@ const AdminFaqDashboard = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.2 }}
             >
-              <div className="bg-blue-50 border border-blue-200 rounded p-4 flex justify-between items-start shadow-sm">
+              <div className="faq-card" style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
                 <div>
-                  <p className="font-semibold text-blue-800">Q: {faq.question}</p>
-                  <p className="text-sm text-gray-700 mt-1">A: {faq.answer}</p>
+                  <p style={{fontWeight:700, color:'#1d4ed8'}}>Q: {faq.question}</p>
+                  <p style={{opacity:.9, marginTop:'.35rem'}}>A: {faq.answer}</p>
                 </div>
                 <button
-                  className="text-red-500 hover:text-red-700"
+                  className="nav-item logout-btn"
                   onClick={() => handleDelete(faq._id)}
+                  title="Delete"
+                  style={{background:'#ef4444'}}
                 >
                   <Trash2 className="w-5 h-5" />
                 </button>
@@ -149,7 +148,7 @@ const AdminFaqDashboard = () => {
             </motion.div>
           ))
         ) : (
-          <p className="text-gray-500 text-center italic">No FAQs yet.</p>
+          <p style={{opacity:.8, textAlign:'center', fontStyle:'italic'}}>No FAQs yet.</p>
         )}
       </div>
     </motion.div>
